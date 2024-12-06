@@ -20,7 +20,7 @@ module Utils
         request.body = payload
       end
 
-      response.body
+      { body: response.body, headers: response.headers }
     end
 
     private
@@ -32,6 +32,7 @@ module Utils
 
     def initialize_connection
       @connection = Faraday.new(url: url, headers: default_headers, ssl: false) do |c|
+        c.use Middlewares::FaradayMiddleware
         c.request :json
         c.response :json
       end

@@ -12,6 +12,8 @@ module Routes
     plugin :hash_routes
     plugin :request_headers
 
+    use Middlewares::RackMiddleware
+
     route(&:hash_routes)
 
     hash_branch 'entrance-application' do |req|
@@ -20,14 +22,21 @@ module Routes
           url: format(Constants::USERS_FIND_BY_UID_URL, { uuid: uuid }),
           payload: {},
           http_method: :get
-        )
+        )[:body]
         Utils::RedisStorage.set(uuid, user_data)
-        req_params = { uuid: user_data[:uuid], passport_no: user_data[:passport_no] }
-        valid_license = Utils::JsonRequest.call(
-          url: Constants::LICENSES_VERIFY_URL,
-          payload: req_params,
-          http_method: :post
-        )
+        req_params = { uuid: user_data["uuid"], passport_no: user_data["passport_no"] }
+
+        baggage_data = {
+          city: FFaker::Address.city,
+          country: FFaker::Address.country
+        }
+        valid_license = Utils::ExecuteInSpan.call(baggage_data: baggage_data) do
+          Utils::JsonRequest.call(
+            url: Constants::LICENSES_VERIFY_URL,
+            payload: req_params,
+            http_method: :post
+          )[:body]
+        end
 
         response.status = 200
         user_data[:license] = valid_license

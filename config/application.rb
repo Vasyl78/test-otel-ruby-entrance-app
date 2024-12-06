@@ -4,6 +4,7 @@ require 'rubygems'
 require 'bundler'
 
 require 'time'
+require 'json'
 require 'logger'
 require 'securerandom'
 
@@ -18,6 +19,7 @@ $LOAD_PATH.unshift(File.expand_path('..', __dir__))
 
 require 'config/constants'
 require 'config/open_telemetry'
+require 'config/logger'
 
 %w[services routes].each do |folder|
   Dir[File.expand_path(File.join(File.dirname(__FILE__), "../#{folder}/**/*.rb"))].sort.each { |file| require file }
